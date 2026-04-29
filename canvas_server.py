@@ -51,6 +51,7 @@ canvas = {
     "is_frozen": False,
     "god_interventions": 0,
     "growth_log": [],
+    "ip_cooldowns": {},  # IP -> last signal timestamp
 }
 
 
@@ -124,6 +125,7 @@ def save_backup():
             "height": canvas["height"],
             "pixels": canvas["pixels"],
             "total_signals": canvas["total_signals"],
+            "ip_cooldowns": canvas["ip_cooldowns"],
             "non_blank_pixels": canvas["non_blank_pixels"],
             "growth_count": canvas["growth_count"],
             "created_at": canvas["created_at"],
@@ -147,6 +149,8 @@ def load_backup():
             canvas["height"] = data["height"]
             canvas["pixels"] = data["pixels"]
             canvas["total_signals"] = data["total_signals"]
+            if "ip_cooldowns" in data:
+                canvas["ip_cooldowns"] = data["ip_cooldowns"]
             canvas["non_blank_pixels"] = data["non_blank_pixels"]
             canvas["growth_count"] = data["growth_count"]
             canvas["created_at"] = data["created_at"]
@@ -180,11 +184,43 @@ if not load_backup():
 
 
 # ── 路由：染坊信号 ───────────────────────
+
+def get_client_ip():
+    """Get real client IP (supports Cloudflare CDN)"""
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip
+    xff = request.headers.get("X-Forwarded-For")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.remote_addr or "unknown"
+
 @app.route("/signal", methods=["POST"])
 def receive_signal():
     """接收染坊心跳信号，生成一个随机像素"""
     if canvas["is_frozen"]:
         return jsonify({"status": "frozen", "message": "画布已冻结"}), 423
+
+    # IP 24h cooldown (anti-DDoS)
+    client_ip = get_client_ip()
+    now = time.time()
+    last_time = canvas["ip_cooldowns"].get(client_ip, 0)
+    if now - last_time < 86400:
+        remaining = int(86400 - (now - last_time))
+        h = remaining // 3600
+        m = (remaining % 3600) // 60
+        return jsonify({
+            "status": "cooldown",
+            "message": f"每IP每24h一次，还剩{h}h{m}m",
+            "next_available": int(last_time + 86400),
+            "remaining_seconds": remaining,
+        }), 429
+    canvas["ip_cooldowns"][client_ip] = now
+    # Clean stale entries (>48h)
+    cutoff = now - 172800
+    stale = [ip for ip, ts in canvas["ip_cooldowns"].items() if ts < cutoff]
+    for ip in stale:
+        del canvas["ip_cooldowns"][ip]
 
     canvas["total_signals"] += 1
 
