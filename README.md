@@ -129,3 +129,6 @@ noah-world-protocol (顶层)
 **History · Civilization · Digital · Evolution · Pinnacle**
 
 *诺亚世界协议社会实验 / Part of the Noah World Protocol social experiment*
+---
+
+**关联：** [诺亚世界协议](https://github.com/gymaira1990-jpg/noah-world-protocol) — 诺亚文明核心架构
