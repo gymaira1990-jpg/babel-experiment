@@ -108,6 +108,23 @@ python workshop.py --color "#FF0000"
 
 ---
 
+## 🏛️ 项目架构 · Project Architecture
+
+本仓库隶属诺亚世界协议体系：
+
+```
+noah-world-protocol (顶层)
+  └── babel-experiment ★ ← 当前仓库
+```
+
+| 角色 | 仓库 | 链接 |
+|------|------|------|
+| 父级 | noah-world-protocol | https://github.com/gymaira1990-jpg/noah-world-protocol |
+
+完整架构文档见 [noah-world-protocol/ARCHITECTURE.md](https://github.com/gymaira1990-jpg/noah-world-protocol/blob/main/ARCHITECTURE.md)
+
+---
+
 **历史 · 文明 · 数字 · 进化 · 巅峰**
 **History · Civilization · Digital · Evolution · Pinnacle**
 
